@@ -1,0 +1,17 @@
+digraph G {
+node [shape=box style=rounded fontname=Helvetica];
+edge [ fontname=Helvetica ];
+initial [shape=point width=0.2];
+idle [shape=plaintext margin=0 label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" STYLE="ROUNDED"><TR><TD><B>idle</B></TD></TR>
+</TABLE>>];reserved [shape=plaintext margin=0 label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" STYLE="ROUNDED"><TR><TD><B>reserved</B></TD></TR>
+<HR/><TR><TD ALIGN="LEFT">entry / reserve()<BR/>exit / unreserve()<BR/></TD></TR></TABLE>>];unlocked [shape=plaintext margin=0 label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" STYLE="ROUNDED"><TR><TD><B>unlocked</B></TD></TR>
+</TABLE>>];driving [shape=plaintext margin=0 label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" STYLE="ROUNDED"><TR><TD><B>driving</B></TD></TR>
+<HR/><TR><TD ALIGN="LEFT">entry / move()<BR/>exit / stop()<BR/></TD></TR></TABLE>>];initial -> idle [label=" "]
+idle -> reserved [label=" reserve"]
+reserved -> idle [label=" unreserve"]
+reserved -> unlocked [label=" unlock /\nunlock();\n"]
+idle -> unlocked [label=" unlock /\nunlock();\n"]
+unlocked -> idle [label=" lock /\nlock();\n"]
+unlocked -> driving [label=" gas"]
+driving -> unlocked [label=" release"]
+}

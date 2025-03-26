@@ -1,14 +1,35 @@
 import stmpy
+import paho.mqtt.client as mqtt
+import json
+from shared import broker, port
 
 class Application:
     stm: stmpy.Machine 
-    
 
     def __init__(self, username: str):
         self.username = username
+        self.client = mqtt.Client()
+        self.client.connect(broker, port)
+        self.client.subscribe('gr8/scooters')
 
-    def reserve_scooter(self, scooter_id):
-        print("reserve_scooter()")
+    def on_connect(self, client, userdata, flags, rc):
+        print(f"{self.username}'s application connected to server")
+
+    def on_message(self, client, userdata, msg):
+        print(f"{self.username}'s application received message: {msg.payload}")
+
+    # def reserve_scooter(self, scooter_id):
+    #     print("reserve_scooter()")
+    #     # publish to mqtt
+    #     pass
+
+    # def unreserve_scooter(self, scooter_id):
+    #     print("unreserve_scooter()")
+    #     # publish to mqtt
+    #     pass
+
+    def list_available_scooters(self):
+        print("list_available_scooters()")
         # publish to mqtt
         pass
 
@@ -32,9 +53,9 @@ class Application:
         # publish to mqtt
         pass
 
-    def file_report(self, scooter_id):
+    def file_report(self, scooter_id, contents):
         print("file_report()")
-        # publish to mqtt
+        
         pass
 
 application_states = [
