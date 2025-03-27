@@ -31,3 +31,13 @@ class Server:
 
     def reserve_scooter(self):
         pass
+
+    def unreserve_scooter(self):
+        pass
+
+    def unlock_scooter(self):
+        self.client.publish('gr8/scooters/action/1', json.dumps({'action': 'unlock'}))
+
+    def lock_scooter(self):
+        self.client.publish('gr8/scooters/action/1', json.dumps({'action': 'lock'}))
+

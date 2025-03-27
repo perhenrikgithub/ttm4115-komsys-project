@@ -3,17 +3,11 @@ import paho.mqtt.client as mqtt
 import json
 import random
 from shared import broker, port
-import animation
-import time
+from animation import BikeAnimation, bike_animation_transitions
 
 class EScooter:
     stm: stmpy.Machine
     is_reserved = False
-    x_offset = 0 # is used to handle animation
-    reserve_start_time: time
-    reserve_finish_time: time
-    ride_start_time: time
-    ride_finish_time: time
 
     def __init__(self, scooter_id: str):
         self.scooter_id = scooter_id
@@ -105,17 +99,39 @@ class EScooter:
         print("unreserve")
 
     def move(self):
-        # turns on engine (screen stuff)
-        animation.set_display(self.x_offset)
-        self.x_offset = (self.x_offset + 1) % 8
+        print("move")
+        # turns off enigne (screen stuff)
+        
+        stm = stmpy.Machine(name="bike_stm", transitions=bike_animation_transitions, obj=BikeAnimation())
+        driver = stmpy.Driver()
+        driver.add_machine(stm)
+        driver.start()
+
+        print("move again")
+
+        
 
     def stop(self):
+        print("stop")
         # turns off enigne (screen stuff)
-        animation.set_display(0) 
+        pass
 
 
 
 escooter_states = [
+        # {
+        #     'name': 'locked', 
+        #     'entry': 'lock_scooter',
+        #     'exit': 'unlock_scooter'
+        # },
+        # {
+        #     'name': 'off'
+        # },
+        # {
+        #     'name': 'on',
+        #     'entry': 'move_forward',
+        #     'exit': 'stop_moving'
+        # },
         {
             'name': 'idle'
         },
@@ -129,33 +145,58 @@ escooter_states = [
         },
         {
             'name': 'driving',
-            'entry': 'move; start_timer("t", 300)',
-
+            'entry': 'move',
+            'exit': 'stop'
         }
     ]
 
 escooter_transition = [
+        # {
+        #     'source': 'initial',
+        #     'target': 'locked'
+        # },
+
+        # {
+        #     'source': 'locked',
+        #     'target': 'off',
+        #     'trigger': 'unlock'
+        # },
+        # {
+        #     'source': 'off',
+        #     'target': 'on',
+        #     'trigger': 'gas'
+        # },
+        # {
+        #     'source': 'on',
+        #     'target': 'off',
+        #     'trigger': 'release'
+        # },
+        # {
+        #     'source': 'off',
+        #     'target': 'locked',
+        #     'trigger': 'lock'
+        # }
+
         {
             'source': 'initial',
             'target': 'idle'
         },
+
         {
             'source': 'idle',
             'target': 'reserved',
             'trigger': 'reserve',
-            'effect': 'reserve'
         },
         {
             'source': 'reserved',
             'target': 'idle',
             'trigger': 'unreserve',
-            'effect': 'unreserve'
         },
         {
             'source': 'reserved',
             'target': 'unlocked',
             'trigger': 'unlock',
-            'effect': 'unlock; unreseve'
+            'effect': 'unlock'
 
         },
         {
@@ -179,12 +220,6 @@ escooter_transition = [
             'source': 'driving',
             'target': 'unlocked',
             'trigger': 'release',
-            'effect': 'stop'
-        },
-        {
-            'source': 'driving',
-            'target': 'driving',
-            'trigger': 't',
         }
 
     ]
