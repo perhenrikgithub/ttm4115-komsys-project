@@ -2,8 +2,17 @@ digraph G {
 node [shape=box style=rounded fontname=Helvetica];
 edge [ fontname=Helvetica ];
 initial [shape=point width=0.2];
-initial [shape=plaintext margin=0 label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" STYLE="ROUNDED"><TR><TD><B>initial</B></TD></TR>
-<HR/><TR><TD ALIGN="LEFT">entry / update_display()<BR/></TD></TR></TABLE>>];moving [shape=plaintext margin=0 label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" STYLE="ROUNDED"><TR><TD><B>moving</B></TD></TR>
-<HR/><TR><TD ALIGN="LEFT">entry / update_display()<BR/>entry / start_timer(t, 500)<BR/></TD></TR></TABLE>>];initial -> moving [label=" "]
-moving -> moving [label=" t"]
+idle [shape=plaintext margin=0 label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" STYLE="ROUNDED"><TR><TD><B>idle</B></TD></TR>
+</TABLE>>];reserved [shape=plaintext margin=0 label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" STYLE="ROUNDED"><TR><TD><B>reserved</B></TD></TR>
+<HR/><TR><TD ALIGN="LEFT">entry / reserve()<BR/>exit / unreserve()<BR/></TD></TR></TABLE>>];unlocked [shape=plaintext margin=0 label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" STYLE="ROUNDED"><TR><TD><B>unlocked</B></TD></TR>
+</TABLE>>];driving [shape=plaintext margin=0 label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" STYLE="ROUNDED"><TR><TD><B>driving</B></TD></TR>
+</TABLE>>];initial -> idle [label=" "]
+idle -> reserved [label=" reserve /\nreserve();\n"]
+reserved -> idle [label=" unreserve /\nunreserve();\n"]
+reserved -> unlocked [label=" unlock /\nunlock();\n"]
+idle -> unlocked [label=" unlock /\nunlock();\n"]
+unlocked -> idle [label=" lock /\nlock();\n"]
+unlocked -> driving [label=" gas /\nmove();\nstart_timer(t, 100);\n"]
+driving -> unlocked [label=" release /\nstop_timer(t);\nstop();\n"]
+driving -> driving [label=" t /\nmove();\nstart_timer(t, 100);\n"]
 }

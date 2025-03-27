@@ -3,11 +3,12 @@ import paho.mqtt.client as mqtt
 import json
 import random
 from shared import broker, port
-from animation import BikeAnimation, bike_animation_transitions
+import animation
 
 class EScooter:
     stm: stmpy.Machine
     is_reserved = False
+    x_offset = 0
 
     def __init__(self, scooter_id: str):
         self.scooter_id = scooter_id
@@ -72,9 +73,12 @@ class EScooter:
         print("lock()")
         # if the rasberry pi has a lock, it should be locked here
 
+        # screen stuff
+        animation.set_lock_display()
+
         # ? is this necessary?
         # publish an ack to the server and application, if not recieved, the app should try again
-        response = {'status': 'ok'}
+        response = {'response': 'ok'}
         self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response))
 
         # publish the status of the scooter (available, location, battery) to all apps and server
@@ -84,9 +88,12 @@ class EScooter:
         print("unlock()")
         # if the rasberry pi has a lock, it should be unlocked here
 
+        # screen stuff
+        animation.set_unlock_display()
+
         # ? is this necessary?
         # publish an ack to the server and application, if not recieved, the app should try again
-        response = {'status': 'ok'}
+        response = {'response': 'ok'}
         self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response))
         
         # publish the status of the scooter (available, location, battery) to all apps and server
@@ -101,12 +108,8 @@ class EScooter:
     def move(self):
         print("move")
         # turns off enigne (screen stuff)
-        
-        stm = stmpy.Machine(name="bike_stm", transitions=bike_animation_transitions, obj=BikeAnimation())
-        driver = stmpy.Driver()
-        driver.add_machine(stm)
-        driver.start()
-
+        animation.set_display(self.x_offset)
+        self.x_offset = (self.x_offset + 1) % 8
         print("move again")
 
         
@@ -114,24 +117,11 @@ class EScooter:
     def stop(self):
         print("stop")
         # turns off enigne (screen stuff)
-        pass
-
+        animation.set_display(self.x_offset)
+        self.x_offset = 0
 
 
 escooter_states = [
-        # {
-        #     'name': 'locked', 
-        #     'entry': 'lock_scooter',
-        #     'exit': 'unlock_scooter'
-        # },
-        # {
-        #     'name': 'off'
-        # },
-        # {
-        #     'name': 'on',
-        #     'entry': 'move_forward',
-        #     'exit': 'stop_moving'
-        # },
         {
             'name': 'idle'
         },
@@ -144,39 +134,11 @@ escooter_states = [
             'name': 'unlocked'
         },
         {
-            'name': 'driving',
-            'entry': 'move',
-            'exit': 'stop'
+            'name': 'driving'
         }
     ]
 
 escooter_transition = [
-        # {
-        #     'source': 'initial',
-        #     'target': 'locked'
-        # },
-
-        # {
-        #     'source': 'locked',
-        #     'target': 'off',
-        #     'trigger': 'unlock'
-        # },
-        # {
-        #     'source': 'off',
-        #     'target': 'on',
-        #     'trigger': 'gas'
-        # },
-        # {
-        #     'source': 'on',
-        #     'target': 'off',
-        #     'trigger': 'release'
-        # },
-        # {
-        #     'source': 'off',
-        #     'target': 'locked',
-        #     'trigger': 'lock'
-        # }
-
         {
             'source': 'initial',
             'target': 'idle'
@@ -186,11 +148,13 @@ escooter_transition = [
             'source': 'idle',
             'target': 'reserved',
             'trigger': 'reserve',
+            'effect': 'reserve'
         },
         {
             'source': 'reserved',
             'target': 'idle',
             'trigger': 'unreserve',
+            'effect': 'unreserve'
         },
         {
             'source': 'reserved',
@@ -215,11 +179,19 @@ escooter_transition = [
             'source': 'unlocked',
             'target': 'driving',
             'trigger': 'gas',
+            'effect': 'move; start_timer("t", 100)'
         },
         {
             'source': 'driving',
             'target': 'unlocked',
             'trigger': 'release',
+            'effect': 'stop_timer("t"); stop'
+        },
+        {
+            'source': 'driving',
+            'target': 'driving',
+            'trigger': 't',
+            'effect': 'move; start_timer("t", 100)'
         }
 
     ]
@@ -227,14 +199,14 @@ escooter_transition = [
 # from server import Server
 # server = Server()
 
-driver = stmpy.Driver()
+# driver = stmpy.Driver()
 
-escooter = EScooter("1")
-escooter_machine = stmpy.Machine(name=f'escooter1', transitions=escooter_transition, obj=escooter, states=escooter_states)
-escooter.stm = escooter_machine
+# escooter = EScooter("1")
+# escooter_machine = stmpy.Machine(name=f'escooter1', transitions=escooter_transition, obj=escooter, states=escooter_states)
+# escooter.stm = escooter_machine
 
-driver.add_machine(escooter_machine)
-driver.start()
+# driver.add_machine(escooter_machine)
+# driver.start()
 
 # with open("graph.gv", "w") as file:
 #     print(stmpy.get_graphviz_dot(escooter_machine), file=file)

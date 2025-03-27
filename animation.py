@@ -13,7 +13,7 @@ black = "⬛️"
 gray2 = "⬜️" 
 red__ = "🟥" 
 
-bblue = [144, 202, 249]
+bblue = [120, 120, 249]
 green = [34, 177, 76]
 brown = [156, 90, 60]
 yello = [255, 193, 14]
@@ -60,49 +60,39 @@ def animate(bg, bike, x_offset):
                 frame[r][c + x_offset] = bike[r][c]
     return frame
 
-def print_grid(grid):
-    for row in grid:
-        print("".join(row))
-
 def set_display(offset):
     frame = animate(bg, bike, offset % 8)
     sense.set_pixels(flatten_grid(frame))
 
-# class BikeAnimation:
-#     def __init__(self):
-#         self.x_offset = 0
+# lock and unlock symbols
 
-#     def update_display(self):
-#         frame = animate(bg, bike, self.x_offset % 8)
+empty = [0, 0, 0]
 
-#         # print_grid(frame) # terminal implementation
-#         sense.set_pixels(flatten_grid(frame)) # sensehat implementation
-        
-#         self.x_offset = (self.x_offset + 1) % 8
+lock = [
+    [empty, empty, empty, empty, empty, empty, empty, empty],
+    [empty, empty, red__, red__, red__, red__, empty, empty],
+    [empty, empty, red__, empty, empty, red__, empty, empty],
+    [empty, empty, red__, empty, empty, red__, empty, empty],
+    [empty, red__, red__, red__, red__, red__, red__, empty],
+    [empty, red__, empty, empty, empty, empty, red__, empty],
+    [empty, red__, empty, empty, empty, empty, red__, empty],
+    [empty, red__, red__, red__, red__, red__, red__, empty],
+]
 
-# # Define the state machine
-# bike_animation = BikeAnimation()
-# bike_animation_transitions = [
-#     {
-#         "source": "initial", 
-#         "target": "moving"
-#         },  
-#     {
-#         "source": "moving", 
-#         "trigger": "t", 
-#         "target": "moving", 
-#         "effect": "update_display"
-#         },
-# ]
+unlock = [
+    [empty, empty, empty, empty, empty, empty, empty, empty],
+    [empty, empty, green, green, green, green, empty, empty],
+    [empty, empty, green, empty, empty, green, empty, empty],
+    [empty, empty, green, empty, empty, empty, empty, empty],
+    [empty, green, green, green, green, green, green, empty],
+    [empty, green, empty, empty, empty, empty, green, empty],
+    [empty, green, empty, empty, empty, empty, green, empty],
+    [empty, green, green, green, green, green, green, empty],
+]
 
-# stm = stmpy.Machine(name="bike_stm", transitions=bike_animation_transitions, obj=bike_animation)
-# driver = stmpy.Driver()
-# driver.add_machine(stm)
-# driver.start()
 
-# x_off = 0
+def set_lock_display():
+    sense.set_pixels(flatten_grid(lock))
 
-# while True:
-#     set_display(x_off)
-#     time.sleep(0.05)
-#     x_off = (x_off + 1) % 8
+def set_unlock_display():
+    sense.set_pixels(flatten_grid(unlock))
