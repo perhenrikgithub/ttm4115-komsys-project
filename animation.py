@@ -1,5 +1,6 @@
 from sense_hat import SenseHat
 import stmpy
+import time
 
 sense = SenseHat()
 
@@ -63,34 +64,45 @@ def print_grid(grid):
     for row in grid:
         print("".join(row))
 
-class BikeAnimation:
-    def __init__(self):
-        self.x_offset = 0
+def set_display(offset):
+    frame = animate(bg, bike, offset % 8)
+    sense.set_pixels(flatten_grid(frame))
 
-    def update_display(self):
-        frame = animate(bg, bike, self.x_offset % 8)
+# class BikeAnimation:
+#     def __init__(self):
+#         self.x_offset = 0
 
-        # print_grid(frame) # terminal implementation
-        sense.set_pixels(flatten_grid(frame)) # sensehat implementation
+#     def update_display(self):
+#         frame = animate(bg, bike, self.x_offset % 8)
+
+#         # print_grid(frame) # terminal implementation
+#         sense.set_pixels(flatten_grid(frame)) # sensehat implementation
         
-        self.x_offset = (self.x_offset + 1) % 8
+#         self.x_offset = (self.x_offset + 1) % 8
 
-# Define the state machine
-bike_animation = BikeAnimation()
-bike_animation_transitions = [
-    {
-        "source": "initial", 
-        "target": "moving"
-        },  
-    {
-        "source": "moving", 
-        "trigger": "t", 
-        "target": "moving", 
-        "effect": "update_display"
-        },
-]
+# # Define the state machine
+# bike_animation = BikeAnimation()
+# bike_animation_transitions = [
+#     {
+#         "source": "initial", 
+#         "target": "moving"
+#         },  
+#     {
+#         "source": "moving", 
+#         "trigger": "t", 
+#         "target": "moving", 
+#         "effect": "update_display"
+#         },
+# ]
 
-stm = stmpy.Machine(name="bike_stm", transitions=bike_animation_transitions, obj=bike_animation)
-driver = stmpy.Driver()
-driver.add_machine(stm)
-driver.start()
+# stm = stmpy.Machine(name="bike_stm", transitions=bike_animation_transitions, obj=bike_animation)
+# driver = stmpy.Driver()
+# driver.add_machine(stm)
+# driver.start()
+
+# x_off = 0
+
+# while True:
+#     set_display(x_off)
+#     time.sleep(0.05)
+#     x_off = (x_off + 1) % 8
