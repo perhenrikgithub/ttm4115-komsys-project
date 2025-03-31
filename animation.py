@@ -1,8 +1,7 @@
-from sense_hat import SenseHat
+
 import stmpy
 import time
 
-sense = SenseHat()
 
 bblue = "🟦" 
 green = "🟩" 
@@ -14,6 +13,7 @@ gray2 = "⬜️"
 red__ = "🟥" 
 
 bblue = [120, 120, 249]
+_blu_ = [0, 0, 255]
 green = [34, 177, 76]
 brown = [156, 90, 60]
 yello = [255, 193, 14]
@@ -21,6 +21,7 @@ gray1 = [70, 70, 70]
 black = [0, 0, 0]
 gray2 = [180, 180, 180]
 red__ = [237, 28, 36]
+white = [255, 255, 255]
 
 empty = None
 
@@ -53,46 +54,72 @@ bike = [
 ]
 
 def animate(bg, bike, x_offset):
-    frame = [row[:] for row in bg]  # Copy the background
+    frame = [row[:] for row in bg] 
     for r in range(8):
         for c in range(8):
             if bike[r][c] != empty and c + x_offset < 8 and c + x_offset >= 0:
                 frame[r][c + x_offset] = bike[r][c]
     return frame
 
-def set_display(offset):
+def set_display(sense, offset):
     frame = animate(bg, bike, offset % 8)
     sense.set_pixels(flatten_grid(frame))
 
 # lock and unlock symbols
 
-empty = [0, 0, 0]
-
 lock = [
-    [empty, empty, empty, empty, empty, empty, empty, empty],
-    [empty, empty, red__, red__, red__, red__, empty, empty],
-    [empty, empty, red__, empty, empty, red__, empty, empty],
-    [empty, empty, red__, empty, empty, red__, empty, empty],
-    [empty, red__, red__, red__, red__, red__, red__, empty],
-    [empty, red__, empty, empty, empty, empty, red__, empty],
-    [empty, red__, empty, empty, empty, empty, red__, empty],
-    [empty, red__, red__, red__, red__, red__, red__, empty],
+    [black, black, black, black, black, black, black, black],
+    [black, black, red__, red__, red__, red__, black, black],
+    [black, black, red__, black, black, red__, black, black],
+    [black, black, red__, black, black, red__, black, black],
+    [black, red__, red__, red__, red__, red__, red__, black],
+    [black, red__, red__, red__, red__, red__, red__, black],
+    [black, red__, red__, red__, red__, red__, red__, black],
+    [black, red__, red__, red__, red__, red__, red__, black],
 ]
 
 unlock = [
-    [empty, empty, empty, empty, empty, empty, empty, empty],
-    [empty, empty, green, green, green, green, empty, empty],
-    [empty, empty, green, empty, empty, green, empty, empty],
-    [empty, empty, green, empty, empty, empty, empty, empty],
-    [empty, green, green, green, green, green, green, empty],
-    [empty, green, empty, empty, empty, empty, green, empty],
-    [empty, green, empty, empty, empty, empty, green, empty],
-    [empty, green, green, green, green, green, green, empty],
+    [black, black, black, black, black, black, black, black],
+    [black, black, green, green, green, green, black, black],
+    [black, black, green, black, black, green, black, black],
+    [black, black, green, black, black, black, black, black],
+    [black, green, green, green, green, green, green, black],
+    [black, green, green, green, green, green, green, black],
+    [black, green, green, green, green, green, green, black],
+    [black, green, green, green, green, green, green, black],
+]
+
+reserved = [
+    white, white, white, white, white, white, white, black,
+    white, white, white, white, white, white, white, white,
+    white, white, white, black, black, white, white, white,
+    white, white, white, black, black, white, white, white,
+    white, white, white, white, white, white, white, black,
+    white, white, white, white, white, white, white, black,
+    white, white, white, black, black, white, white, white,
+    white, white, white, black, black, white, white, white,
+]
+
+unreserved = [
+    red__, white, white, white, white, white, white, red__,
+    white, red__, white, white, white, white, red__, white,
+    white, white, red__, black, black, red__, white, white,
+    white, white, white, red__, black, white, white, white,
+    white, white, white, white, red__, white, white, black,
+    white, white, red__, white, white, red__, white, black,
+    white, red__, white, black, black, white, red__, white,
+    red__, white, white, black, black, white, white, red__,
 ]
 
 
-def set_lock_display():
+def set_lock_display(sense):
     sense.set_pixels(flatten_grid(lock))
 
-def set_unlock_display():
+def set_unlock_display(sense):
     sense.set_pixels(flatten_grid(unlock))
+
+def set_reserved_display(sense):
+    sense.set_pixels(reserved)
+
+def set_unreserved_display(sense):
+    sense.set_pixels(unreserved)
