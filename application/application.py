@@ -1,7 +1,7 @@
 import stmpy
 import paho.mqtt.client as mqtt
 import json
-from shared import broker, port
+broker, port = "mqtt20.iik.ntnu.no", 1883
 
 class Application:
     stm: stmpy.Machine 
