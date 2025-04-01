@@ -4,7 +4,7 @@ import json
 import math
 import time
 import random
-from shared import broker, port
+from escooter.shared import broker, port
 import animation
 from IMUhelper import normalize_angle, ROLL_THRESHOLD, PITCH_THRESHOLD
 
@@ -15,9 +15,6 @@ class EScooter:
     impact_detected = False
     impact_detected_critical = False
 
-    temp = ()
-
-
     def __init__(self, scooter_id: str, sense=None):
         self.scooter_id = scooter_id
         print(f"[init] S{self.scooter_id}")
@@ -25,6 +22,7 @@ class EScooter:
         self.sense = sense
         if self.sense is not None:
             self.sense.clear()
+            self.sense.stick.direction_any = self.handle_event
     
 
         self.client = mqtt.Client()
@@ -38,8 +36,9 @@ class EScooter:
         print(f"[MQTT - S{self.scooter_id}] Connected to broker")
 
     def on_message(self, client, userdata, msg):
-        print(f"[MQTT - S{self.scooter_id}] Message recieved: {msg.payload}")
+        # print(f"[MQTT - S{self.scooter_id}] Message recieved: {msg.payload}")
 
+        # handles the message from the server, which is a json object
         try:
             payload = json.loads(msg.payload.decode("utf-8"))
         except Exception as err:
@@ -52,19 +51,18 @@ class EScooter:
         
         elif action == 'lock':
             # check if the scooter is parked correctly
-            parking_ok, pitch, roll = self.detect_parking_ok()
+            # parking_ok, pitch, roll = self.detect_parking_ok()
+            parking_ok = self.detect_parking_ok()
             
             if parking_ok:
                 self.stm.send('lock')
             else:
                 response = {
                     'response': 'error', 
-                    'error': f'scooter not parked correctly Pitch: {(pitch / PITCH_THRESHOLD) *100:.2f}%, Roll: {(roll / ROLL_THRESHOLD) *100:.2f}%',
+                    'error': f'scooter not parked correctly', # Pitch: {(pitch / PITCH_THRESHOLD) *100:.2f}%, Roll: {(roll / ROLL_THRESHOLD) *100:.2f}%',
                 }
 
-                self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response))
-
-                
+                self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
         
         elif action == 'reserve':
             self.stm.send('reserve')
@@ -75,6 +73,11 @@ class EScooter:
         else:
             print(f"[ERROR {self.scooter_id}] on_message(): Unknown action: {action}")
 
+    def handle_event(self, event):
+        if event.action == 'held':
+            self.stm.send('gas')
+        elif event.action == 'released':
+            self.stm.send('release')
 
     def get_GPS(self):
         # returns a random GPS location in Trondheim (as the raspberry pi does not have GPS), if properly implemented, this would return the actual GPS location
@@ -92,23 +95,21 @@ class EScooter:
             # 'location': self.get_GPS(), 
             # 'battery': self.get_battery(),
         }
-        self.client.publish('gr8/scooters/status', json.dumps(status))
+        self.client.publish('gr8/scooters/status', json.dumps(status), qos=1)
 
     def lock(self):
         # screen stuff
         if self.sense is not None:
             animation.set_lock_display(sense=self.sense)
 
-        _, pitch, roll = self.detect_parking_ok()
-
         response = {
-            'response': 'ok!', 
-            'parking': f'Parking ok. Pitch: {(pitch / PITCH_THRESHOLD) *100:.2f}%, Roll: {(roll / ROLL_THRESHOLD) *100:.2f}%',
+            'response': 'ok', 
             # 'impact_detected': self.impact_detected,
             # 'impact_detected_critical': self.impact_detected_critical,
         }
         
-        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response))
+        # publish an ack to the server and application, if not recieved, the app should try again
+        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
 
         # publish the status of the scooter (available, location, battery) to all apps and server
         self.publish_status(is_available=True)
@@ -121,10 +122,10 @@ class EScooter:
         if self.sense is not None:
             animation.set_unlock_display(sense=self.sense)
 
-        # ? is this necessary?
+        
         # publish an ack to the server and application, if not recieved, the app should try again
         response = {'response': 'ok'}
-        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response))
+        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
         
         # publish the status of the scooter (available, location, battery) to all apps and server
         self.publish_status(is_available=False)
@@ -139,7 +140,7 @@ class EScooter:
         # ? is this necessary?
         # publish an ack to the server and application, if not recieved, the app should try again
         response = {'response': 'ok'}
-        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response))
+        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
 
     def unreserve(self):
         print("unreserve")
@@ -151,17 +152,17 @@ class EScooter:
         # ? is this necessary?
         # publish an ack to the server and application, if not recieved, the app should try again
         response = {'response': 'ok'}
-        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response))
+        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
 
     def move(self):
         # turns on enigne (screen stuff)
-        animation.set_display(self.x_offset)
+        animation.set_display(self.sense, self.x_offset)
         self.x_offset = (self.x_offset + 1) % 8
 
     def stop(self):
         # turns off enigne (screen stuff)
         self.x_offset = 0
-        animation.set_display(self.x_offset)
+        animation.set_display(self.sense, self.x_offset)
 
     def detect_impact(self, t0=2, t1=4):
         accel = self.sense.get_accelerometer_raw()
@@ -172,8 +173,10 @@ class EScooter:
         o = self.sense.get_orientation()
         pitch = normalize_angle(o["pitch"])
         roll = normalize_angle(o["roll"])
+
+        print(f"Pitch: {pitch * 100 / PITCH_THRESHOLD:.2f}%, Roll: {roll * 100 / ROLL_THRESHOLD:.2f}%")
         
-        return pitch < PITCH_THRESHOLD and roll < ROLL_THRESHOLD, pitch, roll
+        return pitch < PITCH_THRESHOLD and roll < ROLL_THRESHOLD #, pitch, roll
 
 
 escooter_states = [
