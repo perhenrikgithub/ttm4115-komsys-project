@@ -2,16 +2,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scooter</title>
+    <title>Rent a Scooter</title>
     <link rel="stylesheet" href="../static/css/style.css">
 </head>
 <body>
-    <div class="header"><h1>Lei El-sparkesykkel!</h1></div>
+    <div class="header"><h1>Rent a Scooter</h1></div>
 
-    <div class="action">
-        <form action="/start" method="post">
-            <button type="submit">Lei</button>
-        </form>
+    <h2>Scooters near you</h2>
+    <div class="container">
+        {% for scooter in scooters %}
+            <div class="scooter">
+                <span>{{scooter.name}}</span>
+                <div class="buttons">
+                    <form action="/start" method="post">
+                        <button type="submit">rent</button>
+                    </form>
+                    <form action="/reserve" method="post">
+                        <button type="submit">reserve</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <p>We can not find any scooters near you :(</p>
+            {% endfor %}
     </div>
+
 </body>
 </html>
