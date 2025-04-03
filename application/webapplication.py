@@ -133,6 +133,11 @@ application_transitions = [
         'trigger': 'reserve_ok',
     },
     {
+        'source': 'wait_reserve',
+        'target': 'idle',
+        'trigger': 't',
+    },
+    {
         'source': 'reserved',
         'target': 'wait_unlock',
         'trigger': 'req_unlock',
@@ -146,6 +151,11 @@ application_transitions = [
         'source': 'wait_unlock',
         'target': 'active',
         'trigger': 'unlock_ok',
+    },
+    {
+        'source': 'wait_unlock',
+        'target': 'idle',
+        'trigger': 't',
     },
     {
         'source': 'active',
