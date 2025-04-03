@@ -9,6 +9,9 @@ class Application:
     active_scooter_id = None
     received_report = False
 
+    def test(self):
+        return "hei"
+
     def __init__(self, username='test'):
         self.username = username
 
