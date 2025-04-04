@@ -20,6 +20,7 @@ app.secret_key ="fuck_omega"
 
 @app.route("/") #kanskje vise aktuelle sykler, om mulig
 def home():
+    application.request_scooter_list_from_server() #To get updated list
     scooters = application.getList()
     return render_template('index.html', scooters = scooters)
 
@@ -29,7 +30,7 @@ def start():
     if application.req_unlock():
         return render_template('renting.html')
     else:
-        flash("You cant rent this scooter")
+        flash("You cant rent this scooter") #flash is used to sendfeedback to users
     
 @app.route('/stop', methods=['POST'])
 def stop():
