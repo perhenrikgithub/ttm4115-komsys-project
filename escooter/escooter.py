@@ -4,8 +4,8 @@ import json
 import math
 import time
 import random
-import animation
-from IMUhelper import normalize_angle, ROLL_THRESHOLD, PITCH_THRESHOLD
+import escooter.animation as animation
+from escooter.IMUhelper import normalize_angle, ROLL_THRESHOLD, PITCH_THRESHOLD
 broker, port = "mqtt20.iik.ntnu.no", 1883
 
 class EScooter:
@@ -21,7 +21,7 @@ class EScooter:
         
         self.sense = sense
         if self.sense is not None:
-            self.sense.clear()
+            animation.set_lock_display(self.sense)
             self.sense.stick.direction_any = self.handle_event
     
 
@@ -88,12 +88,16 @@ class EScooter:
         # returns a set battery as the raspberry pi does not have a battery, if properly implemented, this would return the actual battery level
         return '60%'
     
+    def check_if_charging(self):
+        return True
+    
     def publish_status(self, is_available):
         status = {
             'available': is_available,
             'scooter_id': self.scooter_id,
-            # 'location': self.get_GPS(), 
-            # 'battery': self.get_battery(),
+            'location': self.get_GPS(), 
+            'battery': self.get_battery(),
+            'is_currently_charging': self.check_if_charging()
         }
         self.client.publish('gr8/scooters/status', json.dumps(status), qos=1)
 
@@ -103,7 +107,7 @@ class EScooter:
             animation.set_lock_display(sense=self.sense)
 
         response = {
-            'response': 'ok', 
+            'response': 'lock_ok', 
             # 'impact_detected': self.impact_detected,
             # 'impact_detected_critical': self.impact_detected_critical,
         }
@@ -124,7 +128,7 @@ class EScooter:
 
         
         # publish an ack to the server and application, if not recieved, the app should try again
-        response = {'response': 'ok'}
+        response = {'response': 'unlock_ok'}
         self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
         
         # publish the status of the scooter (available, location, battery) to all apps and server
@@ -139,20 +143,21 @@ class EScooter:
 
         # ? is this necessary?
         # publish an ack to the server and application, if not recieved, the app should try again
-        response = {'response': 'ok'}
+        response = {'response': 'reserve_ok'}
         self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
+        self.publish_status(is_available=False)
 
-    def unreserve(self):
-        print("unreserve")
+    # def unreserve(self):
+    #     print("unreserve")
 
-        # screen stuff
-        if self.sense is not None:
-            animation.set_unreserved_display(sense=self.sense)
+    #     # screen stuff
+    #     if self.sense is not None:
+    #         animation.set_unreserved_display(sense=self.sense)
 
-        # ? is this necessary?
-        # publish an ack to the server and application, if not recieved, the app should try again
-        response = {'response': 'ok'}
-        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
+    #     # ? is this necessary?
+    #     # publish an ack to the server and application, if not recieved, the app should try again
+    #     response = {'response': 'ok'}
+    #     self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
 
     def move(self):
         # turns on enigne (screen stuff)
@@ -170,6 +175,9 @@ class EScooter:
         return magnitude > t0, magnitude > t1, magnitude
     
     def detect_parking_ok(self):
+        if self.sense is None:
+            return True
+
         o = self.sense.get_orientation()
         pitch = normalize_angle(o["pitch"])
         roll = normalize_angle(o["roll"])
