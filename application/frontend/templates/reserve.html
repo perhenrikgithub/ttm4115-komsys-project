@@ -10,6 +10,14 @@
         <h1>Your scooter is now reserved</h1>
     </div>
 
+    {% with messages = get_flashed_messages() %} 
+        {%if messages %}
+            {% for message in messages %}
+                <h3>{{ message }}</h3>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     <div class="action">
         <form action="/start" method="post">
             <button type="submit">Start</button>

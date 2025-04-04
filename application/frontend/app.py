@@ -1,39 +1,51 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, flash
+from statemachine.webapplication import Application, application_states, application_transitions
+
+import stmpy
+import paho.mqtt.client as mqtt
+import json
 
 
-def create_app(application):
+broker, port = "mqtt20.iik.ntnu.no", 1883 #sett opp aplication instanas
+application = Application("emrik")
+application_machine = stmpy.Machine(name=f'application', transitions=application_transitions, obj=application, states=application_states)
+application.stm = application_machine
+driver = stmpy.Driver()
+driver.add_machine(application_machine)
+driver.start()
 
-    app = Flask(__name__)
-    app.config['APPLICATION'] = application
+app = Flask(__name__)
+app.secret_key ="fuck_omega"
 
-    def get_instance():
-        return app.config['APPLICATION']
 
-    @app.route("/") #kanskje vise aktuelle sykler, om mulig
-    def home():
-        scooters = [
-                {"name": "Scooter 1"},
-                {"name": "Scooter 2"}
-        ]
-        return render_template('index.html', scooters = scooters)
+@app.route("/") #kanskje vise aktuelle sykler, om mulig
+def home():
+    scooters = application.getList()
+    return render_template('index.html', scooters = scooters)
 
-    test = True
-    test2 = True
-    test3 = True
 
-    @app.route('/start', methods=['POST']) #bør kalle state machine , sjekker om den kan leie
-    def start():
+@app.route('/start', methods=['POST']) #bør kalle state machine , sjekker om den kan leie
+def start():
+    if application.req_unlock():
         return render_template('renting.html')
-        
-    @app.route('/stop', methods=['POST'])
-    def stop():
-        if test2:
-            return redirect('/')
-        
-    @app.route('/reserve', methods=['POST'])
-    def reserve():
-        if test3:
-            return render_template('reserve.html')
-        
+    else:
+        flash("You cant rent this scooter")
+    
+@app.route('/stop', methods=['POST'])
+def stop():
+    if application.req_lock():
+        return redirect('/')
+    else:
+        flash("You can not park here")
+    
+@app.route('/reserve', methods=['POST'])
+def reserve():
+    if application.req_reserve():
+        return render_template('reserve.html')
+    else: 
+        flash("Could not reserve this scooter")        
 
-    return app
+  
+if __name__ == "__main__":
+    app.run(debug=True, port=5004)
+

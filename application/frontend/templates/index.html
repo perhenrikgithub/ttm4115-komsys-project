@@ -8,11 +8,21 @@
 <body>
     <div class="header"><h1>Rent a Scooter</h1></div>
 
+    {% with messages = get_flashed_messages() %} 
+        {%if messages %}
+            {% for message in messages %}
+                <h3>{{ message }}</h3>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     <h2>Scooters near you</h2>
     <div class="container">
         {% for scooter in scooters %}
             <div class="scooter">
-                <span>{{scooter.name}}</span>
+                <span>{{scooter.scooter_id}}</span>
+                <span>{{scooter.location}}</span>
+                <span>{{scooter.battery}}</span>
                 <div class="buttons">
                     <form action="/start" method="post">
                         <button type="submit">rent</button>

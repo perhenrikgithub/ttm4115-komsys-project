@@ -9,6 +9,15 @@ class Application:
     active_scooter_id = None
     received_report = False
 
+    def getList(self):
+        return self.known_scooters
+    
+    def getClient(self):
+        return self.client
+    
+
+    
+
     def test(self):
         return "hei"
 
@@ -62,32 +71,37 @@ class Application:
             self.received_report = True
                 
 
+#return True/False is to use logic in app.py file
+
     def req_unlock(self):
         # print("request_unlock_scooter()")
         if self.active_scooter_id is None:
             print("No active scooter to unlock")
-            return
+            return False
         self.received_report = False
         # publish to mqtt
         self.client.publish('gr8/scooters/action/'+ self.active_scooter_id, json.dumps({'action':'unlock'}), qos=1)
+        return True
         
 
     def req_lock(self):
         # print("request_lock_scooter()")
         if self.active_scooter_id is None:
             print("No active scooter to lock")
-            return
+            return False
         
         # publish to mqtt
         self.client.publish('gr8/scooters/action/'+ self.active_scooter_id, json.dumps({'action':'lock'}), qos=1)
+        return True
         
     def req_reserve(self):
         # print("request_reserve_scooter()")
         if self.active_scooter_id is None:
             print("No active scooter to reserve")
-            return
+            return False
         # publish to mqtt
         self.client.publish('gr8/scooters/action/'+ self.active_scooter_id, json.dumps({'action':'reserve'}), qos=1)
+        return True
 
 
     def request_scooter_list_from_server(self):
