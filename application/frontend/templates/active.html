@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Renting</title>
+    <title>Active</title>
     <link rel="stylesheet" href="../static/css/style.css">
 </head>
 <body>
@@ -18,10 +18,14 @@
         {% endif %}
     {% endwith %}
 
-    <div class="action">
-        <form action="/stop" method="post">
-            <button type="submit">Stop</button>
+<div class="big">
+    <div class="buttons">
+        <form action="/lock" method="post">
+            <input type="hidden" name="scooter_name" value="{{ name }}">
+            <input type="submit" value="Lock">
         </form>
     </div>
+</div>
+
 </body>
 </html>

@@ -1,12 +1,13 @@
 import stmpy
 import paho.mqtt.client as mqtt
 import json
+import time
 broker, port = "mqtt20.iik.ntnu.no", 1883
 
 class Application:
     stm: stmpy.Machine 
     known_scooters = {}
-    active_scooter_id = None
+    active_scooter_id = "null"
     received_report = False
 
     def getList(self):
@@ -15,31 +16,31 @@ class Application:
     def getClient(self):
         return self.client
     
-
-    
-
-    def test(self):
-        return "hei"
+    def setActiveScooterID(self, id: str):
+        self.active_scooter_id = id
 
     def __init__(self, username='test'):
         self.username = username
 
         self.client = mqtt.Client()
         self.client.connect(broker, port)
+        self.client.loop_start()
 
         self.client.subscribe('gr8/scooters/status')
         self.client.subscribe('gr8/scooters/response/#')
         self.client.subscribe('gr8/scooters/report/#')
-        self.client.subscribe('gr8/server/scooter_list')
+        self.client.subscribe('gr8/scooters/scooter_list')
+
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.request_scooter_list_from_server()
 
     def on_connect(self, client, userdata, flags, rc):
         print(f"{self.username}'s application connected to server")
+        pass
 
     def on_message(self, client, userdata, msg):
-        # print(f"{self.username}'s application received message: {msg.payload}")
+        #print(f"{self.username}'s application received message: {msg.payload}")
         try:
             payload = json.loads(msg.payload.decode("utf-8"))
         except Exception as err:
@@ -64,11 +65,14 @@ class Application:
             elif response == 'lock_ok':
                 # print(f"{self.username}'s application locked scooter {self.active_scooter_id}")
                 #tell sm lock_ok
-                self.active_scooter_id = None
+                self.active_scooter_id = "null"
                 pass
 
         elif msg.topic == 'gr8/scooters/report/' + self.active_scooter_id:
             self.received_report = True
+
+        elif msg.topic == 'gr8/scooters/scooter_list':
+            self.known_scooters = payload
                 
 
 #return True/False is to use logic in app.py file
@@ -86,13 +90,13 @@ class Application:
 
     def req_lock(self):
         # print("request_lock_scooter()")
-        if self.active_scooter_id is None:
-            print("No active scooter to lock")
-            return False
+        #if self.active_scooter_id is None:
+            #print("No active scooter to lock")
+      
         
         # publish to mqtt
         self.client.publish('gr8/scooters/action/'+ self.active_scooter_id, json.dumps({'action':'lock'}), qos=1)
-        return True
+     
         
     def req_reserve(self):
         # print("request_reserve_scooter()")
@@ -105,9 +109,7 @@ class Application:
 
 
     def request_scooter_list_from_server(self):
-        self.client.publish('gr8/server/scooter_list', 'Go', qos=1)
-
-
+        self.client.publish('gr8/server/scooter_list', time.time(), qos=1)
 
 
 application_states = [
@@ -190,4 +192,3 @@ application_transitions = [
         'trigger': 't',
     }
 ]
-

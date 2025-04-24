@@ -6,10 +6,12 @@
     <link rel="stylesheet" href="../static/css/style.css">
 </head>
 <body>
-    <div class="header"><h1>Rent a Scooter</h1></div>
+    <div class="header">
+        <h1>Rent a Scooter</h1>
+    </div>
 
-    {% with messages = get_flashed_messages() %} 
-        {%if messages %}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
             {% for message in messages %}
                 <h3>{{ message }}</h3>
             {% endfor %}
@@ -18,23 +20,25 @@
 
     <h2>Scooters near you</h2>
     <div class="container">
-        {% for scooter in scooters %}
-            <div class="scooter">
-                <span>{{scooter.scooter_id}}</span>
-                <span>{{scooter.location}}</span>
-                <span>{{scooter.battery}}</span>
-                <div class="buttons">
-                    <form action="/start" method="post">
-                        <button type="submit">rent</button>
-                    </form>
-                    <form action="/reserve" method="post">
-                        <button type="submit">reserve</button>
-                    </form>
+        {% if scooters %}
+            {% for name, data in scooters.items() %}
+                <div class="scooter">
+                    <span><strong>{{ name }}</strong> — Battery: {{ data.battery if data.battery else 'N/A' }}</span>
+                    <div class="buttons">
+                        <form action="/active" method="post">
+                            <input type="hidden" name="scooter_name" value="{{ name }}">
+                            <input type="submit" value="Start">
+                        </form>
+                        <form action="/reserve" method="post">
+                            <input type="hidden" name="scooter_name" value="{{ name }}">
+                            <input type="submit" value="Reserve">
+                        </form>
+                    </div>
                 </div>
-            </div>
-            {% else %}
-            <p>We can not find any scooters near you :(</p>
             {% endfor %}
+        {% else %}
+            <p>We can not find any scooters near you</p>
+        {% endif %}
     </div>
 
 </body>

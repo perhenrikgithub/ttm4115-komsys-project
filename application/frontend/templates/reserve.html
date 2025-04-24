@@ -18,10 +18,13 @@
         {% endif %}
     {% endwith %}
 
-    <div class="action">
-        <form action="/start" method="post">
-            <button type="submit">Start</button>
+    <div class="big">
+    <div class="buttons">
+        <form action="/active" method="post">
+            <input type="hidden" name="scooter_name" value="{{ name }}">
+            <input type="submit" value="Start">
         </form>
+    </div>
     </div>
 
 </body>
