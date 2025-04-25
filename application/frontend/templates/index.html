@@ -1,45 +1,43 @@
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rent a Scooter</title>
-    <link rel="stylesheet" href="../static/css/style.css">
-</head>
-<body>
-    <div class="header">
-        <h1>Rent a Scooter</h1>
-    </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Rent a Scooter</title>
+        <link rel="stylesheet" href="../static/css/style.css" />
+        <script src="../static/js/location.js"></script>
+    </head>
+    <body>
+        <header>
+            <h1>Rent a Scooter</h1>
+        </header>
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-                <h3>{{ message }}</h3>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+        {% with messages = get_flashed_messages() %} {% if messages %} {% for message in messages %}
+        <h3>{{ message }}</h3>
+        {% endfor %} {% endif %} {% endwith %}
 
-    <h2>Scooters near you</h2>
-    <div class="container">
-        {% if scooters %}
-            {% for name, data in scooters.items() %}
-                <div class="scooter">
-                    <span><strong>{{ name }}</strong> — Battery: {{ data.battery if data.battery else 'N/A' }}</span>
-                    <div class="buttons">
-                        <form action="/active" method="post">
-                            <input type="hidden" name="scooter_name" value="{{ name }}">
-                            <input type="submit" value="Start">
-                        </form>
-                        <form action="/reserve" method="post">
-                            <input type="hidden" name="scooter_name" value="{{ name }}">
-                            <input type="submit" value="Reserve">
-                        </form>
-                    </div>
+        <h2>Scooters near you</h2>
+        <div class="container">
+            {% if scooters %} {% for name, data in scooters.items() %}
+            <div class="scooter">
+                <div class="details">
+                    <h3>{{name}}</h3>
+                    <p>Battery: {{ data.battery if data.battery else 'N/A' }}</p>
+                    <p data-location="{{ data.location if data.location else '' }}">Distance: <span class="distance">Calculating...</span></p>
                 </div>
-            {% endfor %}
-        {% else %}
+                <div class="buttons">
+                    <form action="/active" method="post">
+                        <input type="hidden" name="scooter_name" value="{{ name }}" />
+                        <input type="submit" value="Unlock" />
+                    </form>
+                    <form action="/reserve" method="post">
+                        <input type="hidden" name="scooter_name" value="{{ name }}" />
+                        <input type="submit" value="Reserve" />
+                    </form>
+                </div>
+            </div>
+            {% endfor %} {% else %}
             <p>We can not find any scooters near you</p>
-        {% endif %}
-    </div>
-
-</body>
+            {% endif %}
+        </div>
+    </body>
 </html>
