@@ -6,6 +6,7 @@ import time
 import random
 import animation
 from IMUhelper import normalize_angle, ROLL_THRESHOLD, PITCH_THRESHOLD
+from chargeDetector import is_charging
 broker, port = "mqtt20.iik.ntnu.no", 1883
 
 class EScooter:
@@ -17,7 +18,7 @@ class EScooter:
 
     def __init__(self, scooter_id: str, sense=None):
         self.scooter_id = scooter_id
-        print(f"[init] S{self.scooter_id}")
+        # print(f"[init] S{self.scooter_id}")
         
         self.sense = sense
         if self.sense is not None:
@@ -36,7 +37,8 @@ class EScooter:
         self.publish_status(is_available=True)
     
     def on_connect(self, client, userdata, flags, rc):
-        print(f"[MQTT - S{self.scooter_id}] Connected to broker")
+        # print(f"[MQTT - S{self.scooter_id}] Connected to broker")
+        pass
 
     def on_message(self, client, userdata, msg):
         # handles the message from the server, which is a json object
@@ -82,15 +84,17 @@ class EScooter:
 
     def get_GPS(self):
         # returns a random GPS location in Trondheim (as the raspberry pi does not have GPS), if properly implemented, this would return the actual GPS location
-        # return f"{random.uniform(63.3800, 63.4600)}, {random.uniform(10.3300, 10.4900)}"
+        return f"{random.uniform(63.3800, 63.4600)}, {random.uniform(10.3300, 10.4900)}"
         return "63.4300, 10.3950"  # example coordinates
 
     def get_battery(self):
         # returns a set battery as the raspberry pi does not have a battery, if properly implemented, this would return the actual battery level
+        return f"{random.randint(25, 98)}%"
         return '60%'
     
     def check_if_charging(self):
-        return True
+        # return True if the scooter is charging, False otherwise. Simulated by if a usb device is connected or not
+        return is_charging()
     
     def publish_status(self, is_available):
         status = {
