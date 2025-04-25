@@ -9,6 +9,10 @@ from IMUhelper import normalize_angle, ROLL_THRESHOLD, PITCH_THRESHOLD
 from chargeDetector import is_charging
 broker, port = "mqtt20.iik.ntnu.no", 1883
 
+import pygame
+pygame.mixer.init()
+sound = pygame.mixer.Sound("sound2.wav")
+
 class EScooter:
     stm: stmpy.Machine
     is_reserved = False
@@ -165,6 +169,8 @@ class EScooter:
     #     self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
 
     def move(self):
+        if self.sense is not None:
+            sound.play()
         # turns on enigne (screen stuff)
         animation.set_display(self.sense, self.x_offset)
         self.x_offset = (self.x_offset + 1) % 8
