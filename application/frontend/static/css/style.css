@@ -45,7 +45,7 @@ body {
     background-color: lightgreen;
 }
 
-.scooter button {
+.buttons input {
     border-radius: 10px;
     background-color: darkgreen;
     color: white;
@@ -53,4 +53,16 @@ body {
 
 h2 {
     text-align: center;
+}
+
+.big {
+    margin-top: 100px;
+    display: flex;
+    justify-content: center; 
+}
+
+.big .buttons input {
+    font-size: 6em;
+    padding: 1em 3em;
+    border-radius: 10000px;
 }
