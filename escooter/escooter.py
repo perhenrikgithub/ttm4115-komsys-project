@@ -22,6 +22,7 @@ class EScooter:
 
     def __init__(self, scooter_id: str, sense=None):
         self.scooter_id = scooter_id
+        self.gps = self.set_GPS()
         # print(f"[init] S{self.scooter_id}")
         
         self.sense = sense
@@ -86,10 +87,12 @@ class EScooter:
         elif event.action == 'released':
             self.stm.send('release')
 
-    def get_GPS(self):
+    def set_GPS(self, gps=None):
+        if gps is not None:
+            self.gps = gps
+            return gps
         # returns a random GPS location in Trondheim (as the raspberry pi does not have GPS), if properly implemented, this would return the actual GPS location
         return f"{random.uniform(63.3800, 63.4600)}, {random.uniform(10.3300, 10.4900)}"
-        return "63.4300, 10.3950"  # example coordinates
 
     def get_battery(self):
         # returns a set battery as the raspberry pi does not have a battery, if properly implemented, this would return the actual battery level
@@ -104,7 +107,7 @@ class EScooter:
         status = {
             'available': is_available,
             'scooter_id': self.scooter_id,
-            'location': self.get_GPS(), 
+            'location': self.gps, 
             'battery': self.get_battery(),
             'is_currently_charging': self.check_if_charging()
         }
