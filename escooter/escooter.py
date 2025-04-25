@@ -21,7 +21,7 @@ class EScooter:
         
         self.sense = sense
         if self.sense is not None:
-            self.sense.clear()
+            animation.set_lock_display(sense=self.sense)
             self.sense.stick.direction_any = self.handle_event
     
 
@@ -31,13 +31,14 @@ class EScooter:
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.client.loop_start()
+
+        # publish the status of the scooter (available, location, battery) to all apps and server
+        self.publish_status(is_available=True)
     
     def on_connect(self, client, userdata, flags, rc):
         print(f"[MQTT - S{self.scooter_id}] Connected to broker")
 
     def on_message(self, client, userdata, msg):
-        # print(f"[MQTT - S{self.scooter_id}] Message recieved: {msg.payload}")
-
         # handles the message from the server, which is a json object
         try:
             payload = json.loads(msg.payload.decode("utf-8"))
@@ -67,8 +68,8 @@ class EScooter:
         elif action == 'reserve':
             self.stm.send('reserve')
         
-        elif action == 'unreserve':
-            self.stm.send('unreserve')
+        # elif action == 'unreserve':
+        #     self.stm.send('unreserve')
 
         else:
             print(f"[ERROR {self.scooter_id}] on_message(): Unknown action: {action}")
@@ -103,13 +104,13 @@ class EScooter:
             animation.set_lock_display(sense=self.sense)
 
         response = {
-            'response': 'ok', 
+            'response': 'lock_ok', 
             # 'impact_detected': self.impact_detected,
             # 'impact_detected_critical': self.impact_detected_critical,
         }
         
         # publish an ack to the server and application, if not recieved, the app should try again
-        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
+        self.client.publish('gr8/scooters/response/' + self.scooter_id, json.dumps(response), qos=2)
 
         # publish the status of the scooter (available, location, battery) to all apps and server
         self.publish_status(is_available=True)
@@ -124,8 +125,8 @@ class EScooter:
 
         
         # publish an ack to the server and application, if not recieved, the app should try again
-        response = {'response': 'ok'}
-        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
+        response = {'response': 'unlock_ok'}
+        self.client.publish('gr8/scooters/response/' + self.scooter_id, json.dumps(response), qos=2)
         
         # publish the status of the scooter (available, location, battery) to all apps and server
         self.publish_status(is_available=False)
@@ -139,20 +140,20 @@ class EScooter:
 
         # ? is this necessary?
         # publish an ack to the server and application, if not recieved, the app should try again
-        response = {'response': 'ok'}
-        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
+        response = {'response': 'reserve_ok'}
+        self.client.publish('gr8/scooters/response/' + self.scooter_id, json.dumps(response), qos=2)
 
-    def unreserve(self):
-        print("unreserve")
+    # def unreserve(self):
+    #     print("unreserve")
 
-        # screen stuff
-        if self.sense is not None:
-            animation.set_unreserved_display(sense=self.sense)
+    #     # screen stuff
+    #     if self.sense is not None:
+    #         animation.set_unreserved_display(sense=self.sense)
 
-        # ? is this necessary?
-        # publish an ack to the server and application, if not recieved, the app should try again
-        response = {'response': 'ok'}
-        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
+    #     # ? is this necessary?
+    #     # publish an ack to the server and application, if not recieved, the app should try again
+    #     response = {'response': 'unreserve_ok'}
+    #     self.client.publish('gr8/scooters/response/' + self.scooter_id, json.dumps(response), qos=2)
 
     def move(self):
         # turns on enigne (screen stuff)
@@ -186,7 +187,6 @@ escooter_states = [
         {
             'name': 'reserved',
             'entry': 'reserve',
-            'exit': 'unreserve'
         },
         {
             'name': 'unlocked'
@@ -207,12 +207,6 @@ escooter_transition = [
             'target': 'reserved',
             'trigger': 'reserve',
             'effect': 'reserve'
-        },
-        {
-            'source': 'reserved',
-            'target': 'idle',
-            'trigger': 'unreserve',
-            'effect': 'unreserve'
         },
         {
             'source': 'reserved',
