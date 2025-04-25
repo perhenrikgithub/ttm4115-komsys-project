@@ -18,7 +18,19 @@ class EScooter:
     is_reserved = False
     x_offset = 0
     impact_detected = False
-    impact_detected_critical = False
+    impact_detected_critical = False #? skal vi implementere dette?
+
+    # variables that are used to determine what the user are going to pay
+    reserve_start_time: time.time
+    reserve_end_time: time.time
+    cost_per_minute_reserved: float = 0.5
+    cost_per_km: float = 25
+    number_of_km: float = 3 # no way to measure this, so we just set it to a constant number (an estimate for average distance in trondheim)
+    multiplier_parked_in_charging_station: float = 0.7
+    multiplier_impact_detected: float = 1.1
+    multiplier_impact_detected_critical: float = 1.3
+    is_reported = False
+    multiplier_is_reported_by_another_user: float = 1.6
 
     def __init__(self, scooter_id: str, sense=None):
         self.scooter_id = scooter_id
@@ -78,6 +90,9 @@ class EScooter:
         
         elif action == 'reserve':
             self.stm.send('reserve')
+
+        elif action == 'report':
+            self.is_reported = True
         
         # elif action == 'unreserve':
         #     self.stm.send('unreserve')
@@ -207,6 +222,37 @@ class EScooter:
         print(f"Pitch: {pitch * 100 / PITCH_THRESHOLD:.2f}%, Roll: {roll * 100 / ROLL_THRESHOLD:.2f}%")
         
         return pitch < PITCH_THRESHOLD and roll < ROLL_THRESHOLD #, pitch, roll
+    
+    def calculate_bill(self):
+        cost = 0
+        # cost of the trip (pr km)
+        cost += self.number_of_km * self.cost_per_km
+
+        # if reserved, calculate the cost of the reservation
+        if self.is_reserved:
+            self.reserve_end_time = time.time()
+            time_reserved = self.reserve_end_time - self.reserve_start_time
+            cost += (time_reserved / 60) * self.cost_per_minute_reserved
+
+        # ======= multipliers =======
+        # if the scooter is parked in a charging station, apply the multiplier (discount)
+        if self.check_if_charging():
+            cost *= self.multiplier_parked_in_charging_station
+
+        # if the scooter has been impacted, apply the multiplier (increase)
+        if self.impact_detected:
+            cost *= self.multiplier_impact_detected
+
+        # if the scooter has been impacted critically, apply the multiplier (increase)
+        if self.impact_detected_critical:
+            cost *= self.multiplier_impact_detected_critical
+
+        # if the scooter has been reported by another user, apply the multiplier (increase)
+        if self.is_reported:
+            cost *= self.multiplier_is_reported_by_another_user
+
+        return cost
+        
 
 
 escooter_states = [
