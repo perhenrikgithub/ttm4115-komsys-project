@@ -1,31 +1,28 @@
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Active</title>
-    <link rel="stylesheet" href="../static/css/style.css">
-</head>
-<body>
-    <div class="header">
-        <h1>You are now renting!</h1>
-    </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Active</title>
+        <link rel="stylesheet" href="../static/css/style.css" />
+    </head>
+    <body>
+        <header>
+            <h1>You are now renting!</h1>
+        </header>
 
-    {% with messages = get_flashed_messages() %} 
-        {%if messages %}
-            {% for message in messages %}
-                <h3>{{ message }}</h3>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+        {% with messages = get_flashed_messages() %} {%if messages %} {% for message in messages %}
+        <h3>{{ message }}</h3>
+        {% endfor %} {% endif %} {% endwith %}
 
-<div class="big">
-    <div class="buttons">
-        <form action="/lock" method="post">
-            <input type="hidden" name="scooter_name" value="{{ name }}">
-            <input type="submit" value="Lock">
-        </form>
-    </div>
-</div>
+        <h2>Your options</h2>
 
-</body>
+        <div class="container">
+            <div class="buttons">
+                <form action="/lock" method="post">
+                    <input type="hidden" name="scooter_name" value="{{ name }}" />
+                    <input type="submit" value="Lock" />
+                </form>
+            </div>
+        </div>
+    </body>
 </html>
