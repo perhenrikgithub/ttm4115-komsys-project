@@ -4,8 +4,8 @@ import json
 import math
 import time
 import random
-import escooter.animation as animation
-from escooter.IMUhelper import normalize_angle, ROLL_THRESHOLD, PITCH_THRESHOLD
+import animation
+from IMUhelper import normalize_angle, ROLL_THRESHOLD, PITCH_THRESHOLD
 broker, port = "mqtt20.iik.ntnu.no", 1883
 
 class EScooter:
