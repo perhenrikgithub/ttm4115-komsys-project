@@ -38,5 +38,6 @@ class Server:
             }
     
     def publish_scooter_list(self):
+        print(f"Publishing scooter list: {self.known_scooters}")
         self.client.publish("gr8/scooters/scooter_list", json.dumps(self.known_scooters))
 
