@@ -4,14 +4,14 @@ import json
 import math
 import time
 import random
-import animation
-from IMUhelper import normalize_angle, ROLL_THRESHOLD, PITCH_THRESHOLD
-from chargeDetector import is_charging
+import escooter.animation as animation
+from escooter.IMUhelper import normalize_angle, ROLL_THRESHOLD, PITCH_THRESHOLD
+from escooter.chargeDetector import is_charging
 broker, port = "mqtt20.iik.ntnu.no", 1883
 
 import pygame
 pygame.mixer.init()
-sound = pygame.mixer.Sound("sound2.wav")
+sound = pygame.mixer.Sound("escooter/sound2.wav")
 
 class EScooter:
     stm: stmpy.Machine
@@ -65,6 +65,10 @@ class EScooter:
             if parking_ok:
                 self.stm.send('lock')
             else:
+                # error blinking 
+                if self.sense is not None:
+                    animation.set_error_display(sense=self.sense)
+
                 response = {
                     'response': 'error', 
                     'error': f'scooter not parked correctly', # Pitch: {(pitch / PITCH_THRESHOLD) *100:.2f}%, Roll: {(roll / ROLL_THRESHOLD) *100:.2f}%',
@@ -173,6 +177,7 @@ class EScooter:
 
     def move(self):
         if self.sense is not None:
+            sound.stop()
             sound.play()
         # turns on enigne (screen stuff)
         animation.set_display(self.sense, self.x_offset)
@@ -180,6 +185,9 @@ class EScooter:
 
     def stop(self):
         # turns off enigne (screen stuff)
+        if self.sense is not None:
+            sound.stop()
+
         self.x_offset = 0
         animation.set_display(self.sense, self.x_offset)
 

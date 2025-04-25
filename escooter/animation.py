@@ -111,6 +111,18 @@ unreserved = [
     red__, white, white, black, black, white, white, red__,
 ]
 
+red_bg = [
+    red__, red__, red__, red__, red__, red__, red__, red__,
+    red__, red__, red__, red__, red__, red__, red__, red__,
+    red__, red__, red__, red__, red__, red__, red__, red__,
+    red__, red__, red__, red__, red__, red__, red__, red__,
+    red__, red__, red__, red__, red__, red__, red__, red__,
+    red__, red__, red__, red__, red__, red__, red__, red__,
+    red__, red__, red__, red__, red__, red__, red__, red__,
+    red__, red__, red__, red__, red__, red__, red__, red__,
+]
+
+
 
 def set_lock_display(sense):
     sense.set_pixels(flatten_grid(lock))
@@ -123,3 +135,11 @@ def set_reserved_display(sense):
 
 def set_unreserved_display(sense):
     sense.set_pixels(unreserved)
+
+def error_blink(sense):
+    for _ in range(3):
+        sense.set_pixels(flatten_grid(red_bg))
+        time.sleep(0.1)
+        sense.clear()
+        time.sleep(0.1)
+    sense.clear()
