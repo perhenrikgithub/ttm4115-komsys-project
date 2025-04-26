@@ -4,10 +4,9 @@ import time
 import stmpy
 import paho.mqtt.client as mqtt
 import json
-
-
-broker, port = "mqtt20.iik.ntnu.no", 1883 #sett opp aplication instanas
-application = Application("emrik")
+        
+#sett opp aplication instanas
+application = Application(username="Emrik")
 application_machine = stmpy.Machine(name=f'application', transitions=application_transitions, obj=application, states=application_states)
 application.stm = application_machine
 driver = stmpy.Driver()
@@ -22,28 +21,39 @@ app.secret_key ="fuck_omega"
 def home():
     application.request_scooter_list_from_server() #To get updated list
     scooters = application.getList()
-    print(scooters)
     return render_template('index.html', scooters = scooters)
 
 
-@app.route('/active', methods=['POST', 'GET']) #bør kalle state machine , sjekker om den kan leie
-def start():
+@app.route('/active', methods=['POST']) #bør kalle state machine , sjekker om den kan leie
+def active():
     scooter_name = request.form.get('scooter_name')
     application.setActiveScooterID(scooter_name)
+    application.req_unlock()
 
-    if application.req_unlock():
-        return render_template('active.html')
-    else:
-        flash("You cant rent this scooter") #flash is used to sendfeedback to users
-        redirect('/')
+    # Wait for unlock_ok confirmation
+    timeout = 5 
+    poll_interval = 0.3 
+    while timeout > 0:
+        if getattr(application, "unlock_done", False):
+            application.unlock_done = False  # reset the flag
+            return render_template('active.html') # TODO check if this redirect is correct
+        
+        if application.error_message:
+            application.error_message = None
+            flash(application.error_message)
+
+        time.sleep(poll_interval)
+        timeout -= poll_interval  # Decrease timeout by poll_interval
+
+    flash('Could not unlock the escooter (timeout)')
+    return redirect(url_for('index')) # TODO check if this redirect is correct
     
     
-@app.route('/lock', methods=['POST', 'GET'])
+@app.route('/lock', methods=['POST'])
 def stop():
     application.req_lock()
     return redirect('/')
    
-    
 
 @app.route('/reserve', methods=['POST'])
 def reserve():

@@ -2,6 +2,7 @@ import stmpy
 import paho.mqtt.client as mqtt
 import json
 import time
+from flask import flash
 broker, port = "mqtt20.iik.ntnu.no", 1883
 
 class Application:
@@ -9,6 +10,11 @@ class Application:
     known_scooters = {}
     active_scooter_id = "null"
     received_report = False
+
+    unlock_successful = False
+    lock_successful = False
+    reserve_successful = False
+    error_message = None
 
     def getList(self):
         return self.known_scooters
@@ -27,7 +33,7 @@ class Application:
         self.client.loop_start()
 
         self.client.subscribe('gr8/scooters/status')
-        self.client.subscribe('gr8/scooters/response/#')
+        self.client.subscribe('gr8/scooters/#')
         self.client.subscribe('gr8/scooters/report/#')
         self.client.subscribe('gr8/scooters/scooter_list')
 
@@ -56,17 +62,29 @@ class Application:
                 'battery': payload.get('battery'),
             }
 
-        elif msg.topic == 'gr8/scooters/response/' + self.active_scooter_id:
+        elif msg.topic == 'gr8/scooters/' + self.active_scooter_id:
             response = payload.get('response')
             if response == 'unlock_ok':
                 # print(f"{self.username}'s application unlocked scooter {self.active_scooter_id}")
-                #tell sm unlock_ok
-                pass
+                self.unlock_successful = True
+
             elif response == 'lock_ok':
                 # print(f"{self.username}'s application locked scooter {self.active_scooter_id}")
-                #tell sm lock_ok
                 self.active_scooter_id = "null"
-                pass
+                self.lock_successful = True
+
+            elif response == 'reserve_ok':
+                # print(f"{self.username}'s application reserved scooter {self.active_scooter_id}")
+                self.reserve_successful = True
+            
+            elif response == "error":
+                error_message = ""
+                if payload.get("details"):
+                    error_message = f"{payload.get('error_message')} {payload.get('details')}"
+                else:
+                    error_message = f"{payload.get('error_message')}"
+                
+                self.error_message = error_message
 
         elif msg.topic == 'gr8/scooters/report/' + self.active_scooter_id:
             self.received_report = True
@@ -75,37 +93,16 @@ class Application:
             self.known_scooters = payload
                 
 
-#return True/False is to use logic in app.py file
-
     def req_unlock(self):
-        # print("request_unlock_scooter()")
-        if self.active_scooter_id is None:
-            print("No active scooter to unlock")
-            return False
         self.received_report = False
-        # publish to mqtt
         self.client.publish('gr8/scooters/action/'+ self.active_scooter_id, json.dumps({'action':'unlock'}), qos=1)
-        return True
-        
 
     def req_lock(self):
-        # print("request_lock_scooter()")
-        #if self.active_scooter_id is None:
-            #print("No active scooter to lock")
-      
-        
-        # publish to mqtt
         self.client.publish('gr8/scooters/action/'+ self.active_scooter_id, json.dumps({'action':'lock'}), qos=1)
-     
         
     def req_reserve(self):
-        # print("request_reserve_scooter()")
-        if self.active_scooter_id is None:
-            print("No active scooter to reserve")
-            return False
-        # publish to mqtt
         self.client.publish('gr8/scooters/action/'+ self.active_scooter_id, json.dumps({'action':'reserve'}), qos=1)
-        return True
+
 
 
     def request_scooter_list_from_server(self):

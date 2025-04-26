@@ -20,6 +20,10 @@ class EScooter:
     impact_detected = False
     impact_detected_critical = False #? skal vi implementere dette?
 
+    pitch: float
+    roll: float
+
+
     # variables that are used to determine what the user are going to pay
     reserve_start_time: time.time
     reserve_end_time: time.time
@@ -77,14 +81,15 @@ class EScooter:
             if parking_ok:
                 self.stm.send('lock')
             else:
-                # error blinking 
+                response = {
+                        'response': 'error', 
+                        'error_message': 'Scooter not parked correctly',
+                    }
+
+                # error blinking (if there is a sense hat) aswell as additional details for the user
                 if self.sense is not None:
                     animation.set_error_display(sense=self.sense)
-
-                response = {
-                    'response': 'error', 
-                    'error': f'scooter not parked correctly', # Pitch: {(pitch / PITCH_THRESHOLD) *100:.2f}%, Roll: {(roll / ROLL_THRESHOLD) *100:.2f}%',
-                }
+                    response['details'] = f"Pitch: {(self.pitch / PITCH_THRESHOLD) *100:.2f}%, Roll: {(self.roll / ROLL_THRESHOLD) *100:.2f}%"
 
                 self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
         
@@ -144,7 +149,7 @@ class EScooter:
         }
         
         # publish an ack to the server and application, if not recieved, the app should try again
-        self.client.publish('gr8/scooters/response/' + self.scooter_id, json.dumps(response), qos=2)
+        self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
 
         # publish the status of the scooter (available, location, battery) to all apps and server
         self.publish_status(is_available=True)
@@ -218,6 +223,9 @@ class EScooter:
         o = self.sense.get_orientation()
         pitch = normalize_angle(o["pitch"])
         roll = normalize_angle(o["roll"])
+
+        self.pitch = pitch
+        self.roll = roll
 
         print(f"Pitch: {pitch * 100 / PITCH_THRESHOLD:.2f}%, Roll: {roll * 100 / ROLL_THRESHOLD:.2f}%")
         
