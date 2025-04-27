@@ -15,6 +15,7 @@ class Application:
     lock_successful = False
     reserve_successful = False
     error_message = None
+    bill: str = None
 
     def getList(self):
         return self.known_scooters
@@ -22,8 +23,8 @@ class Application:
     def getClient(self):
         return self.client
     
-    def setActiveScooterID(self, id: str):
-        self.active_scooter_id = id
+    def setActiveScooterID(self, id_: str):
+        self.active_scooter_id = id_
 
     def __init__(self, username='test'):
         self.username = username
@@ -64,17 +65,16 @@ class Application:
 
         elif msg.topic == 'gr8/scooters/' + self.active_scooter_id:
             response = payload.get('response')
+            print(f"Application recieved '{response}' for {self.active_scooter_id}")
             if response == 'unlock_ok':
-                # print(f"{self.username}'s application unlocked scooter {self.active_scooter_id}")
                 self.unlock_successful = True
 
             elif response == 'lock_ok':
-                # print(f"{self.username}'s application locked scooter {self.active_scooter_id}")
                 self.active_scooter_id = "null"
+                self.bill = payload.get('bill')
                 self.lock_successful = True
 
             elif response == 'reserve_ok':
-                # print(f"{self.username}'s application reserved scooter {self.active_scooter_id}")
                 self.reserve_successful = True
             
             elif response == "error":
@@ -101,6 +101,7 @@ class Application:
         self.client.publish('gr8/scooters/action/'+ self.active_scooter_id, json.dumps({'action':'lock'}), qos=1)
         
     def req_reserve(self):
+        print(f"Application requesting reservation for {self.active_scooter_id}")
         self.client.publish('gr8/scooters/action/'+ self.active_scooter_id, json.dumps({'action':'reserve'}), qos=1)
 
 

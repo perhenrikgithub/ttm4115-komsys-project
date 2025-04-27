@@ -26,33 +26,59 @@ def home():
 
 @app.route('/active', methods=['POST']) #bør kalle state machine , sjekker om den kan leie
 def active():
-    scooter_name = request.form.get('scooter_name')
-    application.setActiveScooterID(scooter_name)
+    if application.active_scooter_id == "null":
+        scooter_name = request.form.get('scooter_name')
+        application.setActiveScooterID(scooter_name)
     application.req_unlock()
+    application.received_report = False
 
-    # Wait for unlock_ok confirmation
     timeout = 5 
-    poll_interval = 0.3 
+    poll_interval = 0.5 
     while timeout > 0:
-        if getattr(application, "unlock_done", False):
-            application.unlock_done = False  # reset the flag
-            return render_template('active.html') # TODO check if this redirect is correct
+        print(f"Poll returned: {application.unlock_successful}")
+        time.sleep(poll_interval)
+
+        if application.unlock_successful:
+            application.unlock_successful = False  # reset the flag
+            return render_template('active.html') 
         
         if application.error_message:
-            application.error_message = None
             flash(application.error_message)
+            application.error_message = None
 
-        time.sleep(poll_interval)
         timeout -= poll_interval  # Decrease timeout by poll_interval
 
-    flash('Could not unlock the escooter (timeout)')
-    return redirect(url_for('index')) # TODO check if this redirect is correct
+    flash('Scooter timed out, or scooter is already in use')
+    return redirect('/') 
     
     
 @app.route('/lock', methods=['POST'])
 def stop():
-    application.req_lock()
-    return redirect('/')
+    application.req_lock() #! change here
+
+    timeout = 5 
+    poll_interval = 0.5 
+    while timeout > 0:
+        print(f"Poll returned: {application.lock_successful}") #! change here
+        time.sleep(poll_interval)
+
+        if application.lock_successful: #! change here
+            application.lock_successful = False  # reset the flag #! change here
+            flash(application.bill, "bill")
+            application.bill = None # reset the bill
+            
+            return redirect("/") #home() #! change here
+        
+        if application.error_message:
+            print(f"error message: {application.error_message}")
+            flash(application.error_message)
+            application.error_message = None
+            return redirect('/active') #! change here
+
+        timeout -= poll_interval  # Decrease timeout by poll_interval
+
+    flash('Could not lock scooter (connection timeout)') #! change here
+    return redirect('/active') 
    
 
 @app.route('/reserve', methods=['POST'])
@@ -60,12 +86,30 @@ def reserve():
     scooter_name = request.form.get('scooter_name')
     application.setActiveScooterID(scooter_name)
 
-    if application.req_reserve():
-        return render_template('reserve.html')
-    else: 
-        flash("Could not reserve this scooter")        
+    application.req_reserve() #! change here
+
+    # Wait for key confirmation e.g. 'unlock_ok'
+    timeout = 5 
+    poll_interval = 0.5 
+    while timeout > 0:
+        print(f"Poll returned: {application.reserve_successful}") #! change here
+        time.sleep(poll_interval)
+
+        if application.reserve_successful: #! change here
+            application.reserve_successful = False  # reset the flag #! change here
+            return render_template('reserve.html') #! change here
+        
+        if application.error_message:
+            print(f"error message: {application.error_message}")
+            flash(application.error_message)
+            application.error_message = None
+
+        timeout -= poll_interval  # Decrease timeout by poll_interval
+
+    flash('Could not reserve scooter (connection timeout)') #! change here
+    return redirect('/')
 
   
 if __name__ == "__main__":
-    app.run(debug=True, port=5014)
+    app.run(debug=True, port=5015)
 

@@ -5,19 +5,56 @@
         <title>Rent a Scooter</title>
         <link rel="stylesheet" href="../static/css/style.css" />
         <script src="../static/js/location.js"></script>
+        <script src="../static/js/loader.js"></script>
     </head>
     <body>
         <header>
             <h1>Rent a Scooter</h1>
         </header>
 
-        {% with messages = get_flashed_messages() %} {% if messages %} {% for message in messages %}
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %} {% if category == 'bill' %}
+        <div class="bill">
+            <h4>Your Bill</h4>
+            <p>Trip price: <strong>{{ message.number_of_km | round(2) }} km</strong> × <strong>{{ message.cost_per_km | round(2) }} kr/km</strong> = <strong>{{ (message.number_of_km * message.cost_per_km) | round(2) }} kr</strong></p>
+
+            {% if message.time_reserved > 0 %}
+            <p>Time reserved: <strong>{{ message.time_reserved | round(2) }} seconds</strong> × <strong>{{ message.cost_per_minute_reserved | round(2) }} kr/min</strong> = <strong>{{ (message.reservation_cost) | round(2) }} kr</strong></p>
+            {% endif %} {% if message.charging_discount %}
+            <p><strong>Charging discount:</strong> -{{ ((1 - message.multipliers.charging_discount) * 100) | round(0) }}%</p>
+            {% else %}
+            <p><strong>Charging discount:</strong> No</p>
+            {% endif %}
+
+            <!-- Impact stuff -->
+            <!-- {% if message.impact_multiplier %}
+            <p><strong>Impact multiplier:</strong> {{ message.multipliers.impact_multiplier | round(2) }}</p>
+
+            {% if message.critical_impact_multiplier %}
+            <p><strong>Critical impact multiplier:</strong> {{ message.multipliers.critical_impact_multiplier | round(2) }}</p>
+            {% else %}
+            <p><strong>Critical impact multiplier:</strong> None</p>
+            {% endif %} 
+            {% endif %}  -->
+
+            {% if message.reported_multiplier %}
+            <hr />
+
+            <p>Your driving was reported.</p>
+            <p><strong>Reported multiplier:</strong> +{{ ((message.multipliers.reported_multiplier - 1) | round(2)) * 100 }}%</p>
+            {% endif %}
+
+            <hr />
+
+            <p><strong>Total trip cost:</strong> <strong>{{ message.trip_cost | round(2) }} kr</strong></p>
+        </div>
+        {% else %}
         <h3 style="color: red">{{ message }}</h3>
-        {% endfor %} {% endif %} {% endwith %}
+        {% endif %} {% endfor %} {% endif %} {% endwith %}
 
         <h2>Scooters near you</h2>
         <div class="container">
-            {% if scooters %} {% for name, data in scooters.items() %}
+            {% if scooters %} {% for name, data in scooters.items() %} {% if data.available %}
+
             <div class="scooter">
                 <div class="details">
                     <h3>{{name}}</h3>
@@ -35,9 +72,13 @@
                     </form>
                 </div>
             </div>
-            {% endfor %} {% else %}
+            {% endif %} {% endfor %} {% else %}
             <p>We can not find any scooters near you</p>
             {% endif %}
+        </div>
+
+        <div class="hidden">
+            <span class="loader"></span>
         </div>
     </body>
 </html>
