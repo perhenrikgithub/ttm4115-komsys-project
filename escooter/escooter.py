@@ -17,8 +17,8 @@ class EScooter:
     stm: stmpy.Machine
     is_reserved = False
     x_offset = 0
-    impact_detected = False
-    impact_detected_critical = False #? skal vi implementere dette?
+    # impact_detected = False
+    # impact_detected_critical = False 
 
     pitch: float
     roll: float
@@ -27,12 +27,12 @@ class EScooter:
     # variables that are used to determine what the user are going to pay
     reserve_start_time: time.time
     reserve_end_time: time.time
-    cost_per_minute_reserved: float = 0.5
-    cost_per_km: float = 25
-    number_of_km: float = 3 # no way to measure this, so we just set it to a constant number (an estimate for average distance in trondheim)
+    cost_per_minute_reserved: float = 3.5 # kr/min
+    cost_per_km: float = 15 # kr/km
+    number_of_km: float = random.uniform(1, 4) # no way to measure this, therefore random number
     multiplier_parked_in_charging_station: float = 0.7
-    multiplier_impact_detected: float = 1.1
-    multiplier_impact_detected_critical: float = 1.3
+    # multiplier_impact_detected: float = 1.1
+    # multiplier_impact_detected_critical: float = 1.3
     is_reported = False
     multiplier_is_reported_by_another_user: float = 1.6
 
@@ -70,14 +70,16 @@ class EScooter:
             return
         action = payload.get('action')
 
+        print(f"Scooter {self.scooter_id} received action: {action}")
+
         if action == 'unlock':
             self.stm.send('unlock')
         
         elif action == 'lock':
+            print("scooter recieved action lock!")
             # check if the scooter is parked correctly
-            # parking_ok, pitch, roll = self.detect_parking_ok()
             parking_ok = self.detect_parking_ok()
-            
+
             if parking_ok:
                 self.stm.send('lock')
             else:
@@ -88,22 +90,21 @@ class EScooter:
 
                 # error blinking (if there is a sense hat) aswell as additional details for the user
                 if self.sense is not None:
-                    animation.set_error_display(sense=self.sense)
+                    animation.error_blink(sense=self.sense, error_text="Parking bad!")
                     response['details'] = f"Pitch: {(self.pitch / PITCH_THRESHOLD) *100:.2f}%, Roll: {(self.roll / ROLL_THRESHOLD) *100:.2f}%"
 
                 self.client.publish('gr8/scooters/' + self.scooter_id, json.dumps(response), qos=2)
         
         elif action == 'reserve':
             self.stm.send('reserve')
+            self.reserve_start_time = time.time()
+            self.is_reserved = True
 
         elif action == 'report':
             self.is_reported = True
-        
-        # elif action == 'unreserve':
-        #     self.stm.send('unreserve')
+            # self.client.publish('gr8/scooters/' + self.scooter_id, "Reported!!!!", qos=2) #!! Denne linjen krasjet ting??!
 
-        else:
-            print(f"[ERROR {self.scooter_id}] on_message(): Unknown action: {action}")
+            print(f"reported === {self.is_reported}")
 
     def handle_event(self, event):
         if event.action == 'held':
@@ -144,8 +145,7 @@ class EScooter:
 
         response = {
             'response': 'lock_ok', 
-            # 'impact_detected': self.impact_detected,
-            # 'impact_detected_critical': self.impact_detected_critical,
+            'bill': self.calculate_bill(),
         }
         
         # publish an ack to the server and application, if not recieved, the app should try again
@@ -155,9 +155,6 @@ class EScooter:
         self.publish_status(is_available=True)
 
     def unlock(self):
-        print("unlock()")
-        # if the rasberry pi had a lock, it should be unlocked here
-
         # screen stuff
         if self.sense is not None:
             animation.set_unlock_display(sense=self.sense)
@@ -171,7 +168,6 @@ class EScooter:
         self.publish_status(is_available=False)
 
     def reserve(self):
-        print("reserve")
 
         # screen stuff
         if self.sense is not None:
@@ -211,10 +207,10 @@ class EScooter:
         self.x_offset = 0
         animation.set_display(self.sense, self.x_offset)
 
-    def detect_impact(self, t0=2, t1=4):
-        accel = self.sense.get_accelerometer_raw()
-        magnitude = math.sqrt(accel['x']**2 + accel['y']**2)
-        return magnitude > t0, magnitude > t1, magnitude
+    # def detect_impact(self, t0=2, t1=4):
+    #     accel = self.sense.get_accelerometer_raw()
+    #     magnitude = math.sqrt(accel['x']**2 + accel['y']**2)
+    #     return magnitude > t0, magnitude > t1, magnitude
     
     def detect_parking_ok(self):
         if self.sense is None:
@@ -232,34 +228,59 @@ class EScooter:
         return pitch < PITCH_THRESHOLD and roll < ROLL_THRESHOLD #, pitch, roll
     
     def calculate_bill(self):
-        cost = 0
+        bill = {
+            'number_of_km': self.number_of_km,
+            'cost_per_km': self.cost_per_km,
+            'trip_cost': 0,
+            'time_reserved': 0,
+            'cost_per_minute_reserved': self.cost_per_minute_reserved,
+            'reservation_cost': 0,
+            'charging_discount': False, 
+            # 'impact_multiplier': False,
+            # 'critical_impact_multiplier': False,
+            'reported_multiplier': False,
+            'multipliers': {
+                'charging_discount': self.multiplier_parked_in_charging_station,
+                # 'impact_multiplier': self.multiplier_impact_detected,
+                # 'critical_impact_multiplier': self.multiplier_impact_detected_critical,
+                'reported_multiplier': self.multiplier_is_reported_by_another_user
+            }
+        }
         # cost of the trip (pr km)
-        cost += self.number_of_km * self.cost_per_km
+        trip_cost = self.number_of_km * self.cost_per_km
 
         # if reserved, calculate the cost of the reservation
         if self.is_reserved:
             self.reserve_end_time = time.time()
             time_reserved = self.reserve_end_time - self.reserve_start_time
-            cost += (time_reserved / 60) * self.cost_per_minute_reserved
+            bill['time_reserved'] = time_reserved
+            bill['reservation_cost'] = (time_reserved / 60) * self.cost_per_minute_reserved
 
         # ======= multipliers =======
         # if the scooter is parked in a charging station, apply the multiplier (discount)
         if self.check_if_charging():
-            cost *= self.multiplier_parked_in_charging_station
+            bill['charging_discount'] = True
+            trip_cost = trip_cost * self.multiplier_parked_in_charging_station
 
-        # if the scooter has been impacted, apply the multiplier (increase)
-        if self.impact_detected:
-            cost *= self.multiplier_impact_detected
+        # # if the scooter has been impacted, apply the multiplier (increase)
+        # if self.impact_detected:
+        #     bill['impact_multiplier'] = True
+        #     bill['trip_cost'] *= self.multiplier_impact_detected
 
-        # if the scooter has been impacted critically, apply the multiplier (increase)
-        if self.impact_detected_critical:
-            cost *= self.multiplier_impact_detected_critical
+        # # if the scooter has been impacted critically, apply the multiplier (increase)
+        # if self.impact_detected_critical:
+        #     bill['critical_impact_multiplier'] = True
+        #     bill['trip_cost'] *= self.multiplier_impact_detected_critical
 
         # if the scooter has been reported by another user, apply the multiplier (increase)
         if self.is_reported:
-            cost *= self.multiplier_is_reported_by_another_user
+            bill['reported_multiplier'] = True
+            trip_cost *= self.multiplier_is_reported_by_another_user
 
-        return cost
+
+        bill['trip_cost'] = trip_cost
+
+        return bill
         
 
 

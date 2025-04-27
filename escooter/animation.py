@@ -136,10 +136,14 @@ def set_reserved_display(sense):
 def set_unreserved_display(sense):
     sense.set_pixels(unreserved)
 
-def error_blink(sense):
+def error_blink(sense, error_text=None):
     for _ in range(3):
-        sense.set_pixels(flatten_grid(red_bg))
+        sense.set_pixels(red_bg)
         time.sleep(0.1)
         sense.clear()
         time.sleep(0.1)
+
+    if error_text:
+        sense.show_message(error_text, text_colour=red__, back_colour=black, scroll_speed=0.05)
+    
     sense.clear()
