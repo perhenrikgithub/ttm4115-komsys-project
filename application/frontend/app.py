@@ -73,12 +73,12 @@ def stop():
             print(f"error message: {application.error_message}")
             flash(application.error_message)
             application.error_message = None
-            return redirect('/active') #! change here
+            # return redirect('/active') #! change here
 
         timeout -= poll_interval  # Decrease timeout by poll_interval
 
     flash('Could not lock scooter (connection timeout)') #! change here
-    return redirect('/active') 
+    return redirect('/') 
    
 
 @app.route('/reserve', methods=['POST'])
