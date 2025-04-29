@@ -126,6 +126,9 @@ class EScooter:
     
     def check_if_charging(self):
         # return True if the scooter is charging, False otherwise. Simulated by if a usb device is connected or not
+        if self.sense is None:
+            # set default to not charging (if not raspberry pi with sense hat)
+            return False
         return is_charging()
     
     def publish_status(self, is_available):

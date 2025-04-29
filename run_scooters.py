@@ -5,16 +5,12 @@ broker, port = "mqtt20.iik.ntnu.no", 1883
 
 # ========== Settings ==============
 
-ADD_SENSEHAT_SCOOTER = True
+ADD_SENSEHAT_SCOOTER = False
 ADD_THREE_SCOOTERS = True
-ADD_EXTRA_SCOOTER = False
+ADD_EXTRA_SCOOTER = True
 
 # ======= Settings done ============
-
-if ADD_SENSEHAT_SCOOTER:
-    from sense_hat import SenseHat
-
-sense = SenseHat()
+    
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
@@ -25,15 +21,21 @@ client.connect(broker, port)
 client.on_connect = on_connect
 client.loop_start()
 
+driver = stmpy.Driver() 
+
+
 if ADD_SENSEHAT_SCOOTER:
+    from sense_hat import SenseHat
+
+    sense = SenseHat()
+
     RaspberryPi = EScooter("RaspberryPi", sense)
     Pi_machine = stmpy.Machine(name=f'escooter1', transitions=escooter_transition, obj=RaspberryPi, states=escooter_states)
     RaspberryPi.stm = Pi_machine
     RaspberryPi.set_GPS("63.419413, 10.401522") # near hovedbygget
     RaspberryPi.publish_status(is_available=True)
 
-driver = stmpy.Driver() 
-driver.add_machine(Pi_machine)
+    driver.add_machine(Pi_machine)  
 
 if ADD_THREE_SCOOTERS: 
     escooter = EScooter("Scooter1")
@@ -53,7 +55,7 @@ if ADD_THREE_SCOOTERS:
     driver.add_machine(escooter_machine3)
 
 if ADD_EXTRA_SCOOTER:
-    escooter4 = EScooter("Scooter 4 (added later)")
+    escooter4 = EScooter("Scooter 4")
     escooter_machine4 = stmpy.Machine(name=f'new scooter', transitions=escooter_transition, obj=escooter, states=escooter_states)
     escooter4.stm = escooter_machine4
     driver.add_machine(escooter_machine4)

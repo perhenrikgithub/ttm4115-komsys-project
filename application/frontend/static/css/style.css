@@ -73,9 +73,9 @@ h2 {
     transition: all 0.3s ease;
 }
 
-.scooter:hover {
+/* .scooter:hover {
     transform: scale(1.05);
-}
+} */
 
 /* Scooter details */
 .details {
@@ -126,9 +126,9 @@ form input[type="submit"] {
     width: 100%;
 }
 
-form input[type="submit"]:hover {
+/* form input[type="submit"]:hover {
     background-color: var(--button-hover-color);
-}
+} */
 
 /* Responsive design */
 @media (max-width: 768px) {
@@ -143,6 +143,47 @@ form input[type="submit"]:hover {
     }
 }
 
+/* report stuff */
+.report-container {
+    margin: 1em;
+    background-color: var(--card-background-color);
+    padding: 1em;
+    border-radius: 8px;
+}
+
+.report-container h3 {
+    text-align: left;
+    color: var(--text-color);
+    font-size: 1rem;
+    padding-bottom: .25em;
+}
+
+.report-container div {
+    display: flex;
+    justify-content: space-between
+}
+
+.report-container input[type="text"] {
+    padding: 10px;
+    width: 200px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+.report-container button {
+    background-color: var(--primary-color);
+    color: var(--button-text-color);
+    border: none;
+    padding: 10px 20px;
+    margin: .1em 0;
+    font-size: 1rem;
+    border-radius: 50px; /* Pill shape */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
 
 /* Loader */
 

@@ -6,6 +6,34 @@
         <link rel="stylesheet" href="../static/css/style.css" />
         <script src="../static/js/location.js"></script>
         <script src="../static/js/loader.js"></script>
+        <script>
+            function report() {
+                const scooterName = document.getElementById("report_scooter").value;
+
+                if (!scooterName) {
+                    console.error("Scooter name is required");
+                    return;
+                }
+
+                fetch("/report", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ scooter_name: scooterName }),
+                })
+                    // .then((response) => {
+                    //     if (response.redirected) {
+                    //         window.location.href = response.url; // Redirect if Flask sends a redirect
+                    //     }
+                    // })
+                    .catch((error) => {
+                        console.error("Error reporting scooter:", error);
+                    });
+
+                console.log("Scooter reported:", scooterName);
+            }
+        </script>
     </head>
     <body>
         <header>
@@ -79,6 +107,14 @@
 
         <div class="hidden">
             <span class="loader"></span>
+        </div>
+
+        <div class="report-container">
+            <h3>Report a scooter for poor driving</h3>
+            <div>
+                <input type="text" id="report_scooter" placeholder="e.g. 'Scooter1'" />
+                <button onclick="report();">Report</button>
+            </div>
         </div>
     </body>
 </html>

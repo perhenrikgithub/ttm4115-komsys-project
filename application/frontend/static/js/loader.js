@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const forms = document.querySelectorAll("form");
     const container = document.querySelector(".container");
     const loader = document.querySelector(".hidden");
+    const report = document.querySelector(".report-container");
 
     const h2 = document.querySelector("h2");
     const h3 = document.querySelector("h3");
@@ -12,6 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
             h2.style.display = "none";
             h3.style.display = "none";
 
+            report.style.display = "none";
             container.style.display = "none";
             loader.style.display = "flex";
             loader.style.justifyContent = "center";

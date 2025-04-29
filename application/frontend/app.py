@@ -66,7 +66,7 @@ def stop():
             application.lock_successful = False  # reset the flag #! change here
             flash(application.bill, "bill")
             application.bill = None # reset the bill
-            
+
             return redirect("/") #home() #! change here
         
         if application.error_message:
@@ -107,6 +107,21 @@ def reserve():
         timeout -= poll_interval  # Decrease timeout by poll_interval
 
     flash('Could not reserve scooter (connection timeout)') #! change here
+    return redirect('/')
+
+@app.route('/report', methods=['POST'])
+def report():
+    scooter_name = request.json.get('scooter_name')  # Get the scooter name from the request
+    # if not scooter_name:
+    #     flash("Scooter name is required to report an issue.", "error")
+    #     return redirect('/')
+
+    # Publish a report message to the MQTT broker
+    topic = f'gr8/scooters/action/{scooter_name}'
+    payload = json.dumps({'action': 'report'})
+    application.client.publish(topic, payload, qos=1)
+
+    flash(f"Report for scooter '{scooter_name}' has been submitted.", "success")
     return redirect('/')
 
   
