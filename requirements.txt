@@ -1,0 +1,7 @@
+Flask
+stmpy
+paho-mqtt
+# Add sense-hat if using Raspberry Pi with Sense HAT
+# sense-hat
+# Add pygame if using Raspberry Pi with sound
+# pygame
